@@ -20,19 +20,18 @@ from transformers import (
 )
 
 parser = argparse.ArgumentParser(description="train RAG")
-parser.add_argument("--docs_dir", type=str, default="../data/RAG_document", help="docs directory")
-parser.add_argument("--faiss_path", type=str, default="../data/RAG_document.faiss", help="docs faiss path")
+parser.add_argument("--docs_dir", type=str, default="./data/RAG_document", help="docs directory")
+parser.add_argument("--faiss_path", type=str, default="./data/RAG_document.faiss", help="docs faiss path")
 parser.add_argument("--n_docs", type=int, default=3, help="number of docs to retrieve")
-parser.add_argument("--train_path", type=str, default="../data/law_train_data.jsonl", help="train data path")
-parser.add_argument("--valid_path", type=str, default="../data/law_valid_data.jsonl", help="valid data path")
-parser.add_argument("--output_dir", type=str, default="./results", help="output path")
+parser.add_argument("--train_path", type=str, default="./data/law_train_data.jsonl", help="train data path")
+parser.add_argument("--valid_path", type=str, default="./data/law_valid_data.jsonl", help="valid data path")
 parser.add_argument("--lr", type=float, default=2e-5, help="learning rate")
 parser.add_argument("--batch_size", type=int, default=1, help="batch size")
-parser.add_argument("--max_steps", type=int, default=100, help="max steps")
-parser.add_argument("--save_steps", type=int, default=100, help="save steps")
-parser.add_argument("--eval_steps", type=int, default=100, help="eval steps")
+parser.add_argument("--max_steps", type=int, default=1000, help="max steps")
+parser.add_argument("--save_steps", type=int, default=500, help="save steps")
+parser.add_argument("--eval_steps", type=int, default=1000, help="eval steps")
 parser.add_argument("--logging_steps", type=int, default=5, help="logging steps")
-parser.add_argument("--model_saving_path", type=str, default="../models/rag", help="model saving path")
+parser.add_argument("--model_saving_path", type=str, default="./trained_models/rag", help="model saving path")
 args = parser.parse_args()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -131,7 +130,7 @@ class RAG(nn.Module):
         return outputs
 
 training_args = Seq2SeqTrainingArguments(
-    output_dir=args.output_dir,
+    output_dir=args.model_saving_path,
     evaluation_strategy="steps",
     learning_rate=args.lr,
     per_device_train_batch_size=args.batch_size,
