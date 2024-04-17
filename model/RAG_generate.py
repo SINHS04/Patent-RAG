@@ -11,6 +11,7 @@ from transformers import (
   XLMRobertaConfig
 )
 
+# get args
 parser = argparse.ArgumentParser(description="generate")
 parser.add_argument("--docs_dir", type=str, default="./data/RAG_document", help="docs directory")
 parser.add_argument("--faiss_path", type=str, default="./data/RAG_document.faiss", help="docs faiss path")
@@ -18,6 +19,7 @@ parser.add_argument("--n_docs", type=int, default=3, help="number of docs to ret
 parser.add_argument("--model_saving_path", type=str, default="./trained_models/rag", help="model saving path")
 args = parser.parse_args()
 
+# load model from local(pretrained)
 print("Model is loading...")
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -49,20 +51,18 @@ model = RagTokenForGeneration(rag_config, encoder, generator, retriever)
 
 print("Model is ready!")
 
+# generate 10 times
 for i in range(10):
     prompt = input(f"입력(남은 횟수 : {10-i}) : ")
     inputs = encoder_tokenizer(prompt, return_tensors="pt").to(device)
-
-    # Encode
+    
     question_hidden_states = model.question_encoder(inputs["input_ids"], inputs["attention_mask"])[0].mean(1).cpu()
 
-    # Retrieve
     docs_dict = model.retriever(inputs["input_ids"].cpu().numpy(), question_hidden_states.detach().numpy(), return_tensors="pt")
     doc_scores = torch.bmm(
         question_hidden_states.unsqueeze(1), docs_dict["retrieved_doc_embeds"].float().transpose(1, 2)
     ).squeeze(1)
 
-    # Forward to generator
     generated_seq = model.generate(
         context_input_ids=docs_dict["context_input_ids"].to(device),
         context_attention_mask=docs_dict["context_attention_mask"].to(device),

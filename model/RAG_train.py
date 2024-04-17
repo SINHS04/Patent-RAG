@@ -8,7 +8,6 @@ from datasets import Dataset
 from transformers import (
   RagRetriever, 
   RagConfig, 
-  RagSequenceForGeneration,
   RagTokenForGeneration,
   AutoModelForSeq2SeqLM, 
   AutoTokenizer, 
@@ -19,6 +18,7 @@ from transformers import (
   Seq2SeqTrainingArguments
 )
 
+# get args
 parser = argparse.ArgumentParser(description="train RAG")
 parser.add_argument("--docs_dir", type=str, default="./data/RAG_document", help="docs directory")
 parser.add_argument("--faiss_path", type=str, default="./data/RAG_document.faiss", help="docs faiss path")
@@ -34,17 +34,21 @@ parser.add_argument("--logging_steps", type=int, default=5, help="logging steps"
 parser.add_argument("--model_saving_path", type=str, default="./trained_models/rag", help="model saving path")
 args = parser.parse_args()
 
+# device setting
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Using device : {device}")
 
+# get encoder
 encoder_id = "sentence-transformers/xlm-r-base-en-ko-nli-ststb"
 encoder_tokenizer = AutoTokenizer.from_pretrained(encoder_id)
 encoder = AutoModel.from_pretrained(encoder_id).to(device)
 
+# get generator
 generator_id = "facebook/mbart-large-50"
 generator_tokenizer = AutoTokenizer.from_pretrained(generator_id, src_lang="ko_KR", tgt_lang="ko_KR")
 generator = AutoModelForSeq2SeqLM.from_pretrained(generator_id).to(device)
 
+# set RAG config using each model's config
 generator_config = MBartConfig.get_config_dict(generator_id)[0]
 encoder_config = XLMRobertaConfig.get_config_dict(encoder_id)[0]
 encoder_config['model_type'] = "xlm-roberta"
@@ -58,11 +62,15 @@ rag_config = RagConfig(
   n_docs=args.n_docs,
 )
 
+# set RAG model and retriever
 retriever = RagRetriever(rag_config, encoder_tokenizer, generator_tokenizer)
 model = RagTokenForGeneration(rag_config, encoder, generator, retriever)
+
+# load data
 train_ds = Dataset.from_json(args.train_path)
 valid_ds = Dataset.from_json(args.valid_path)
 
+# preprocess data
 def preprocess_data(examples):
     input_sequence = f"""
         다음 내용을 보고 참고해야 할 법률을 찾아주세요.
@@ -90,6 +98,7 @@ def preprocess_data(examples):
 encoded_tds = train_ds.map(preprocess_data, remove_columns=train_ds.column_names)
 encoded_vds = valid_ds.map(preprocess_data, remove_columns=valid_ds.column_names)
 
+# define RAG model wrapper for training
 class RAG(nn.Module):
     def __init__(self, model):
         super(RAG, self).__init__()
@@ -116,19 +125,16 @@ class RAG(nn.Module):
         )
 
         shifted_labels = torch.cat([labels[:, 1:], torch.full((labels.size(0), 1), 1, device=device)], dim=1)
-        # shifted_decoder_attention_mask = torch.cat([decoder_attention_mask[:, 1:], torch.zeros((decoder_attention_mask.size(0), 1), device=device, dtype=torch.long)], dim=1)
 
-        # Calculate loss with mask
         logits_flat = outputs['logits'].view(-1, outputs['logits'].size(-1))
         labels_flat = shifted_labels.repeat_interleave(repeats=args.n_docs, dim=0).view(-1)
-        # mask_flat = shifted_decoder_attention_mask.repeat_interleave(repeats=args.n_docs, dim=0).view(-1)
         loss = self.criterian(logits_flat, labels_flat)
-        # loss = (loss * mask_flat).sum() / mask_flat.sum()
 
         outputs['loss'] = loss
 
         return outputs
 
+# args for training
 training_args = Seq2SeqTrainingArguments(
     output_dir=args.model_saving_path,
     evaluation_strategy="steps",
@@ -145,8 +151,10 @@ training_args = Seq2SeqTrainingArguments(
     eval_steps=args.eval_steps,
 )
 
+# wrap RAG model
 rag = RAG(model)
 
+# define trainer
 trainer = Seq2SeqTrainer(
     model=rag,
     args=training_args,
@@ -155,14 +163,17 @@ trainer = Seq2SeqTrainer(
     tokenizer=encoder_tokenizer,
 )
 
+# train
 trainer.train()
 
+# save trained models
 rag.model.question_encoder.save_pretrained(args.model_saving_path + "/encoder")
 encoder_tokenizer.save_pretrained(args.model_saving_path + "/encoder")
 rag.model.generator.save_pretrained(args.model_saving_path + "/generator")
 generator_tokenizer.save_pretrained(args.model_saving_path + "/generator")
 rag.model.retriever.save_pretrained(args.model_saving_path + "/retriever")
 
+# test trained model
 querys = [
     "원자력 발전소 건설 설계 단계에서 참고해야 하는 법률의 종류",
     "유사수신행위를 금지·처벌하는 유사수신행위의 규제에 관한 법률 제6조 제1항, 제3조 위반죄가 사기죄와 별개의 범죄인지 여부(적극)",
@@ -174,15 +185,13 @@ for query in querys:
     prompt = f"다음 내용을 보고 참고해야 할 법률을 찾아주세요. {query}"
     inputs = encoder_tokenizer(prompt, return_tensors="pt").to(device)
 
-    # Encode
     question_hidden_states = rag.model.question_encoder(inputs["input_ids"], inputs["attention_mask"])[0].mean(1).cpu()
-    # Retrieve
+
     docs_dict = rag.model.retriever(inputs["input_ids"].cpu().numpy(), question_hidden_states.detach().numpy(), return_tensors="pt")
-    # print(encoder_tokenizer.decode(docs_dict['context_input_ids'][0]))
     doc_scores = torch.bmm(
         question_hidden_states.unsqueeze(1), docs_dict["retrieved_doc_embeds"].float().transpose(1, 2)
     ).squeeze(1)
-    # Forward to generator
+
     generated_seq = rag.model.generate(
         context_input_ids=docs_dict["context_input_ids"].to(device),
         context_attention_mask=docs_dict["context_attention_mask"].to(device),

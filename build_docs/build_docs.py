@@ -10,8 +10,8 @@ from transformers import AutoTokenizer, AutoModel
 
 # get args
 parser = argparse.ArgumentParser(description="make docs for retrieve")
-parser.add_argument("--path", type=str, default="../data/preprocessed_law_context_hang.jsonl", help="path to preprocessed data")
-parser.add_argument("--output_path", type=str, default="../data/RAG_document", help="output path to save dataset")
+parser.add_argument("--path", type=str, default="./data/preprocessed_law_context_hang.jsonl", help="path to preprocessed data")
+parser.add_argument("--output_path", type=str, default="./data/RAG_document", help="output path to save dataset")
 args = parser.parse_args()
 
 path = args.path

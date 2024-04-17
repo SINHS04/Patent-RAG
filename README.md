@@ -1,5 +1,5 @@
 # 법률 검색 모델
-주어진 입력과 관련된 법을 검색하고, 이를 바탕으로 참조해야 하는 법을 생성해주는 모델입니다.
+(Prototype)주어진 입력과 관련된 법을 검색하고, 이를 바탕으로 참조해야 하는 법을 생성해주는 모델입니다.
 
 ### Baseline
 |Type|Model(huggingface)|
@@ -86,9 +86,6 @@ options:
   --valid_path VALID_PATH
                         valid data path
 
-  --output_dir OUTPUT_DIR
-                        output path
-
   --lr LR               
                         learning rate
 
@@ -132,4 +129,10 @@ options:
 
   --model_saving_path MODEL_SAVING_PATH
                         model saving path
+```
+
+## Outptu example
+```
+입력(남은 횟수 : 10) : 원자력 발전소
+</s><s> 원자력안전법 / 제1절 발전용원자로 및 관계시설의 건설 // 발전소</s>
 ```
