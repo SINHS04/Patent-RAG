@@ -1,3 +1,5 @@
 data
-data/law_train_data.jsonl
-data/law_train_data.jsonl
+# data/law_train_data.jsonl
+# data/law_train_data.jsonl
+trained_models
+wandb
