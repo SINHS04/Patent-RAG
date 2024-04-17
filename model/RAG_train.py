@@ -191,5 +191,6 @@ for query in querys:
         max_length=200,
         temperature=0.8,
     )
-
-    print(generator_tokenizer.decode(generated_seq[0]))
+    
+    print("query :", query)
+    print("output :", generator_tokenizer.decode(generated_seq[0]) + '\n')

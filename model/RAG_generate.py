@@ -12,10 +12,10 @@ from transformers import (
 )
 
 parser = argparse.ArgumentParser(description="generate")
-parser.add_argument("--docs_dir", type=str, default="../data/RAG_document", help="docs directory")
-parser.add_argument("--faiss_path", type=str, default="../data/RAG_document.faiss", help="docs faiss path")
+parser.add_argument("--docs_dir", type=str, default="./data/RAG_document", help="docs directory")
+parser.add_argument("--faiss_path", type=str, default="./data/RAG_document.faiss", help="docs faiss path")
 parser.add_argument("--n_docs", type=int, default=3, help="number of docs to retrieve")
-parser.add_argument("--model_saving_path", type=str, default="../models/rag", help="model saving path")
+parser.add_argument("--model_saving_path", type=str, default="./trained_models/rag", help="model saving path")
 args = parser.parse_args()
 
 print("Model is loading...")
@@ -72,4 +72,4 @@ for i in range(10):
         temperature=0.8,
     )
 
-    print(generator_tokenizer.decode(generated_seq[0]))
+    print(generator_tokenizer.decode(generated_seq[0]) + '\n')
