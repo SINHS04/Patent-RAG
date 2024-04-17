@@ -179,7 +179,7 @@ for query in querys:
     question_hidden_states = rag.model.question_encoder(inputs["input_ids"], inputs["attention_mask"])[0].mean(1).cpu()
     # Retrieve
     docs_dict = rag.model.retriever(inputs["input_ids"].cpu().numpy(), question_hidden_states.detach().numpy(), return_tensors="pt")
-    print(encoder_tokenizer.decode(docs_dict['context_input_ids'][0]))
+    # print(encoder_tokenizer.decode(docs_dict['context_input_ids'][0]))
     doc_scores = torch.bmm(
         question_hidden_states.unsqueeze(1), docs_dict["retrieved_doc_embeds"].float().transpose(1, 2)
     ).squeeze(1)
