@@ -16,7 +16,16 @@ build_docs
 # dataset
 data
 ├── law_train_data.jsonl
-└── law_valid_data.jsonl
+├── law_valid_data.jsonl
+├── RAG_document.faiss
+└── RAG_document
+    ├── data-00000-of-00002.arrow
+    ├── data-00000-of-00003.arrow
+    ├── data-00001-of-00002.arrow
+    ├── data-00001-of-00003.arrow
+    ├── data-00002-of-00003.arrow
+    ├── dataset_info.json
+    └── state.json
 
 # train and generate
 model
@@ -54,32 +63,73 @@ pip install -r requirements.txt
 ## How to Run
 ### Train
 ```
-python -m run train \
-    --output-dir outputs/ \
-    --seed 42 --epoch 10 \
-    --learning-rate 2e-5 --weight-decay 0.01 \
-    --batch-size 64 --valid-batch-size 64
+python ./model/RAG_train.py
 ```
-python -m run train --output-dir outputs/beomi/KcELECTRA-base-v2022/1_2 --seed 42 --epoch 10 --learning-rate 2e-5 --weight-decay 0.01 --batch-size 64 --valid-batch-size 64
 
-python -m run train --output-dir outputs --seed 42 --epoch 10 --learning-rate 2e-5 --weight-decay 0.01 --batch-size 64 --valid-batch-size 64 --model-num 2 --tokenizer-num 2 --model2-num 2 --tokenizer2-num 2
-
-python -m run train --output-dir outputs/inputchange --seed 42 --epoch 10 --learning-rate 2e-5 --weight-decay 0.01 --batch-size 64 --valid-batch-size 64 --model-num 2 --tokenizer-num 2 --model2-num 2 --tokenizer2-num 2
-
-### Inference
+Options
 ```
-python -m run inference \
-    --model-ckpt-path /workspace/Korean_EA_2023/outputs/<your-model-ckpt-path> \
-    --output-path test_output.jsonl \
-    --batch-size 64 \
-    --device cuda:0
+options:
+  -h, --help            show this help message and exit
+
+  --docs_dir DOCS_DIR   
+                        docs directory
+
+  --faiss_path FAISS_PATH
+                        docs faiss path
+
+  --n_docs N_DOCS       
+                        number of docs to retrieve
+
+  --train_path TRAIN_PATH
+                        train data path
+
+  --valid_path VALID_PATH
+                        valid data path
+
+  --output_dir OUTPUT_DIR
+                        output path
+
+  --lr LR               
+                        learning rate
+
+  --batch_size BATCH_SIZE
+                        batch size
+
+  --max_steps MAX_STEPS
+                        max steps
+
+  --save_steps SAVE_STEPS
+                        save steps
+
+  --eval_steps EVAL_STEPS
+                        eval steps
+
+  --logging_steps LOGGING_STEPS
+                        logging steps
+
+  --model_saving_path MODEL_SAVING_PATH
+                        model saving path
 ```
-python -m run inference --model-ckpt-path outputs/klue/roberta-large/1_3/model --output-path outputs/klue/roberta-large/1_3/output.jsonl --batch-size 64 --device cuda:0
 
-now
-python -m run inference --model-ckpt-path outputs/nlp04/korean_sentiment_analysis_kcelectra/dataset_0/model --output-path outputs/nlp04/korean_sentiment_analysis_kcelectra/dataset_0/output.jsonl --batch-size 64 --device cuda:0
+### Generate
+```
+python ./model/RAG_generate.py
+````
 
-python -m run inference --model-ckpt-path outputs/nlp04/korean_sentiment_analysis_kcelectra/dataset-0_1/model --model2-ckpt-path outputs/nlp04/korean_sentiment_analysis_kcelectra/dataset-0_1/model2 --output-path outputs/nlp04/korean_sentiment_analysis_kcelectra/dataset-0_1/output.jsonl --batch-size 64 --device cuda:0 --device2 cuda:1
+Options
+````
+options:
+  -h, --help            show this help message and exit
 
-python -m run inference --model-ckpt-path outputs/model --model2-ckpt-path outputs/model2 --output-path outputs/output.jsonl --batch-size 64 --device cuda:0 --device2 cuda:1
+  --docs_dir DOCS_DIR   
+                        docs directory
 
+  --faiss_path FAISS_PATH
+                        docs faiss path
+
+  --n_docs N_DOCS       
+                        number of docs to retrieve
+
+  --model_saving_path MODEL_SAVING_PATH
+                        model saving path
+```
