@@ -131,7 +131,7 @@ options:
                         model saving path
 ```
 
-## Outptu example
+## Output example
 ```
 입력(남은 횟수 : 10) : 원자력 발전소
 </s><s> 원자력안전법 / 제1절 발전용원자로 및 관계시설의 건설 // 발전소</s>
