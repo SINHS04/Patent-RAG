@@ -7,7 +7,7 @@
 |question_encoder|sentence-transformers/xlm-r-base-en-ko-nli-ststb|
 |generator|facebook/mbart-large-50|
 
-## Directory Structue
+## Directory Structure
 ```
 # build docs(faiss)
 build_docs
