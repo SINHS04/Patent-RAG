@@ -114,7 +114,7 @@ python ./model/RAG_generate.py
 ````
 
 Options
-````
+```
 options:
   -h, --help            show this help message and exit
 
